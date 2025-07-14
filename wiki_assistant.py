@@ -38,7 +38,7 @@ def prompt_claude(prompt):
     system_prompt = """
     You will be asked a question by the user. 
     If answering the question requires data you were not trained on, you can use the get_article tool to get the contents of a recent wikipedia article about the topic. 
-    If you can answer a question without needing to call the tool, please answer without calling any tools.
+    If you can answer a question without needing to call the tool, please give an in-depth answer. 
     Only call the tool when needed. 
     """
     while(True):
@@ -50,7 +50,7 @@ def prompt_claude(prompt):
                 model = "claude-3-haiku-20240307",
                 system = system_prompt,
                 messages = messages,
-                max_tokens = 500,
+                max_tokens = 1000,
                 tools = [get_info_tool]
             )
 
