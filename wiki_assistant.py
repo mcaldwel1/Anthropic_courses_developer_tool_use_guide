@@ -19,7 +19,7 @@ def get_info(research_topic):
 
 get_info_tool = {
     "name": "info_getter",
-    "description": "A tool to retrieve an up to date Wikipedia article",
+    "description": "A tool to retrieve information from an up to date Wikipedia article",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -33,12 +33,11 @@ get_info_tool = {
 }
 
 def prompt_claude(prompt): 
+
     messages = [{"role": "user", "content": prompt}]
 
     system_prompt = """
-    You will be asked a question by the user. 
-    If answering the question requires data you were not trained on, you can use the get_article tool to get the contents of a recent wikipedia article about the topic. 
-    If you can answer a question without needing to call the tool, please give an in-depth answer. 
+    You will be given a prompt by the user. If the prompt requires data you are not up to date on, use the info_getter tool to search for and get the contents of a wikipedia article about the topic. 
     Only call the tool when needed. 
     """
     while(True):
@@ -50,11 +49,11 @@ def prompt_claude(prompt):
                 model = "claude-3-haiku-20240307",
                 system = system_prompt,
                 messages = messages,
-                max_tokens = 1000,
+                max_tokens = 500,
+                tool_choice = {"type": "auto"},
                 tools = [get_info_tool]
             )
-
-            if(response.content[0].type == "tool_use"):
+            if(response.stop_reason == "tool_use"):
                 tool_use = response.content[-1]
                 tool_name = tool_use.name
                 tool_input = tool_use.input
@@ -62,6 +61,7 @@ def prompt_claude(prompt):
                 messages.append({"role": "assistant", "content": response.content})
                 
                 if(tool_name == "info_getter"):
+                    print(f"===claude wants to use the {tool_name} tool===")
                     search_term = tool_input["research_topic"]
                     wiki_result = ''
                     wiki_result += get_info(search_term)
@@ -79,13 +79,15 @@ def prompt_claude(prompt):
 
                     response = client.messages.create(
                         model = "claude-3-haiku-20240307",
+                        system = system_prompt,
                         messages = messages,
                         max_tokens = 350,
                         tools = [get_info_tool]
                     )
+
             else:
-                messages.append({"role": "assistant", "content": response.content})
                 print(response.content[0].text)
+                messages.append({"role": "assistant", "content": response.content})
         except: 
             print('program exited')
             break
